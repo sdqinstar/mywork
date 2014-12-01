@@ -1,5 +1,4 @@
 #include "common.h"
-#include "string.h"
 
 int parse_cmd(char* buf, struct cmd *c) {
   char *p=NULL;
@@ -21,14 +20,10 @@ void process_session(struct task *t, int time) {
   int iRet;
   struct session *s = (struct session *)t->context;
   t->state = IDLE;
-  struct epoll_event ev;
-  ev.events = EPOLLOUT | EPOLLERR | EPOLLHUP;
-  ev.data.fd = s->fd;
-
-  iRet = epoll_ctl(epoll_fd,EPOLL_CTL_MOD, s->fd,&ev);
-  if(iRet<0) {
-    printf("err:%d\n",errno);
-  }
+  
+  fdtabs[s->fd].epoll = EPOLLOUT | EPOLLERR | EPOLLHUP;
+  fdtabs[s->fd].pollflag = EPOLL_CTL_MOD;
+  list_insert_head(fdlist,&fdtabs[s->fd].qlist);
   
   struct cmd c;
   iRet = parse_cmd(s->req,&c);

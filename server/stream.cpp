@@ -1,10 +1,13 @@
 #include "common.h"
-#include "string.h"
 
 
 void clean_up(int fd) {
   struct session *s=(struct session*)fdtabs[fd].qtask.context;
+  
+  pool_free(gpool,s->req);
+  pool_free(gpool,s->rep);
   delete s;
+  list_remove(&fdtabs[fd].qtask.qlist);
   close(fd);  
 }
 
@@ -17,6 +20,7 @@ int stream_read(int fd) {
   } else if( iRet == 0) {
     printf("socket closed\n");
 	clean_up(fd);
+	return 0;
   } else if ( errno == EAGAIN) {
   
   } else {
@@ -41,8 +45,7 @@ int stream_write(int fd) {
 	clean_up(fd);
   }
   
-  fdtabs[fd].ev.events = EPOLLIN | EPOLLERR | EPOLLHUP;
-  fdtabs[fd].ev.data.fd = fd;
+  fdtabs[fd].epoll = EPOLLIN | EPOLLERR | EPOLLHUP;
   fdtabs[fd].pollflag = EPOLL_CTL_MOD;
   list_insert_head(fdlist,&fdtabs[fd].qlist);
   
@@ -64,6 +67,8 @@ int stream_accept(int fd) {
   fdtabs[cfd].cb[DIR_WR].f = stream_write;
   
   struct session *s = new session;
+  s->req = (char*)pool_alloc(gpool);
+  s->rep = (char*)pool_alloc(gpool);
   fdtabs[cfd].cb[DIR_RD].buf = s->req;
   fdtabs[cfd].cb[DIR_WR].buf = s->rep;
   s->fd=cfd;
@@ -71,13 +76,9 @@ int stream_accept(int fd) {
   fdtabs[cfd].qtask.process = process_session;
   fdtabs[cfd].qtask.context = s;
   
-  fdtabs[cfd].ev.events = EPOLLIN | EPOLLERR | EPOLLHUP;
-  fdtabs[cfd].ev.data.fd = cfd;
+  fdtabs[cfd].epoll = EPOLLIN | EPOLLERR | EPOLLHUP;
   fdtabs[cfd].pollflag = EPOLL_CTL_ADD;
   list_insert_head(fdlist,&fdtabs[cfd].qlist);
- 
-
-  
   list_insert_head(task,&fdtabs[cfd].qtask.qlist);
   
 }

@@ -40,7 +40,7 @@ ALL_LIBS= -lpthread
 	$(CCC)  $(CCC_OPTIONS)  -o $@ -c $< 
 
 
-SRCS =  queue.o  poll.o stream.o session.o server.o  common.o 
+SRCS =  pool.o list.o  poll.o stream.o session.o server.o  common.o 
 
 
 #下面生成两种库只是为了给出一个例子，实际 zxfunc 只需要生成静态库

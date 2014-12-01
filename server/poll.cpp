@@ -17,8 +17,11 @@ int do_poll() {
   int fd;
   struct list *qlist=fdlist->next;
   while(qlist !=NULL) {
+    struct epoll_event ev;
     struct fdtab* t = (struct fdtab*)((unsigned char*)qlist -offsetof(struct fdtab,qlist));
-    int iRet = epoll_ctl(epoll_fd,t->pollflag,t->fd,&t->ev);
+    ev.data.fd=t->fd;
+	ev.events=t->epoll;
+    int iRet = epoll_ctl(epoll_fd,t->pollflag,t->fd,&ev);
     if(iRet<0) {
       printf("err:%d\n",errno);
 	  return iRet;

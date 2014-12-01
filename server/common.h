@@ -10,6 +10,8 @@
 #include <errno.h>
 #include <unistd.h>
 #include <stddef.h>
+#include <stdlib.h>
+#include "string.h"
 
 #define FD_POLL_IN	0x01
 #define FD_POLL_PRI	0x02
@@ -48,8 +50,8 @@ struct list* next;
 
 
 struct session {
-  char req[MAXBUFLEN];
-  char rep[MAXBUFLEN];
+  char* req;
+  char* rep;
   int fd;
 };
 
@@ -74,10 +76,19 @@ struct fdtab {
 	char* buf;            /* read/write buffer */
   } cb[DIR_SIZE];
   int fd;//socket
-  struct epoll_event ev;
+  int epoll;
   int pollflag;
   int status;//socket status
   struct task qtask;
+};
+
+struct pool {
+  struct list qlist;
+  void  **freelist;
+  int size;
+  int used;
+  int capacity;
+  char name[12];
 };
 
 
@@ -88,6 +99,8 @@ extern int epoll_fd;
 extern struct list *task;
 extern struct list *fdlist;
 extern struct fdtab fdtabs[MAXEPOLLSIZE];
+extern struct list* pllist;
+extern struct pool* gpool;
 
 
 extern int do_poll();
@@ -103,6 +116,10 @@ void list_insert_head(list* h,list* x);
 bool list_empty(list* h);
 void list_insert_tail(list* h,list* x);
 void list_remove(list* x) ;
+
+extern struct pool* pool_create(char* name, int size);
+extern void* pool_alloc(struct pool* pool);
+extern void pool_free(struct pool* pool,void* ptr);
 
 
 #endif

@@ -1,4 +1,3 @@
-#include<string.h>
 #include <stddef.h>
 #include "common.h"
 
@@ -9,6 +8,9 @@ void init() {
   list_init(task);
   fdlist = new struct list;
   list_init(fdlist);
+  pllist = new struct list;
+  list_init(fdlist);
+  gpool=pool_create("buf", 16383);
 }
 
 void run_loop() {
@@ -54,8 +56,7 @@ int main(int argc, char *argv[]) {
   fdtabs[sfd].status = SC_CONN;
   fdtabs[sfd].cb[DIR_RD].f = stream_accept;
   fdtabs[sfd].cb[DIR_WR].f = NULL;
-  fdtabs[sfd].ev.events = EPOLLIN | EPOLLERR | EPOLLHUP;
-  fdtabs[sfd].ev.data.fd = sfd;
+  fdtabs[sfd].epoll = EPOLLIN | EPOLLERR | EPOLLHUP;
   fdtabs[sfd].pollflag = EPOLL_CTL_ADD;
   list_insert_head(fdlist,&fdtabs[sfd].qlist);
   
@@ -63,7 +64,6 @@ int main(int argc, char *argv[]) {
   while(1) {
     run_loop();
   }
-  
 }
 
 
