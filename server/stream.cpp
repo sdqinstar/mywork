@@ -2,6 +2,12 @@
 #include "string.h"
 
 
+void clean_up(int fd) {
+  struct session *s=(struct session*)fdtabs[fd].qtask.context;
+  delete s;
+  close(fd);  
+}
+
 int stream_read(int fd) {
   int iRet;
   char *b = fdtabs[fd].cb[DIR_RD].buf;
@@ -10,12 +16,12 @@ int stream_read(int fd) {
     printf("%s\n",b);
   } else if( iRet == 0) {
     printf("socket closed\n");
-	close(fd);
+	clean_up(fd);
   } else if ( errno == EAGAIN) {
   
   } else {
     printf("r socket err:%d\n",errno);
-	close(fd);
+	clean_up(fd);
 	return 0;
   }
   fdtabs[fd].qtask.state=RUNNING;
@@ -32,15 +38,14 @@ int stream_write(int fd) {
 
   } else {
     printf("w socket err %d\n",errno);
+	clean_up(fd);
   }
-  struct epoll_event ev;
-  ev.events = EPOLLIN | EPOLLERR | EPOLLHUP;
-  ev.data.fd = fd;
-
-  iRet = epoll_ctl(epoll_fd,EPOLL_CTL_MOD,fd,&ev);
-  if(iRet<0) {
-    printf("err:%d\n",errno);
-  }
+  
+  fdtabs[fd].ev.events = EPOLLIN | EPOLLERR | EPOLLHUP;
+  fdtabs[fd].ev.data.fd = fd;
+  fdtabs[fd].pollflag = EPOLL_CTL_MOD;
+  list_insert_head(fdlist,&fdtabs[fd].qlist);
+  
   return 0;
 
 }
@@ -66,15 +71,12 @@ int stream_accept(int fd) {
   fdtabs[cfd].qtask.process = process_session;
   fdtabs[cfd].qtask.context = s;
   
-  struct epoll_event ev;
-  ev.events = EPOLLIN | EPOLLERR | EPOLLHUP;
-  ev.data.fd = cfd;
+  fdtabs[cfd].ev.events = EPOLLIN | EPOLLERR | EPOLLHUP;
+  fdtabs[cfd].ev.data.fd = cfd;
+  fdtabs[cfd].pollflag = EPOLL_CTL_ADD;
+  list_insert_head(fdlist,&fdtabs[cfd].qlist);
  
-  iRet = epoll_ctl(epoll_fd,EPOLL_CTL_ADD,cfd,&ev);
-  if(iRet<0) {
-    printf("err:%d\n",errno);
-	return iRet;
-  }
+
   
   list_insert_head(task,&fdtabs[cfd].qtask.qlist);
   

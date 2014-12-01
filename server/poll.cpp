@@ -15,6 +15,18 @@ int do_poll() {
   int status = 0;
   int count = 0;
   int fd;
+  struct list *qlist=fdlist->next;
+  while(qlist !=NULL) {
+    struct fdtab* t = (struct fdtab*)((unsigned char*)qlist -offsetof(struct fdtab,qlist));
+    int iRet = epoll_ctl(epoll_fd,t->pollflag,t->fd,&t->ev);
+    if(iRet<0) {
+      printf("err:%d\n",errno);
+	  return iRet;
+    }
+	struct list *tmp = qlist;
+	qlist=qlist->next;
+	list_remove(tmp);
+  }
     
   status = epoll_wait(epoll_fd, epoll_events, 10, -1);
   for(count=0; count < status; count++ ) {

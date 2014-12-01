@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <unistd.h>
+#include <stddef.h>
 
 #define FD_POLL_IN	0x01
 #define FD_POLL_PRI	0x02
@@ -73,6 +74,8 @@ struct fdtab {
 	char* buf;            /* read/write buffer */
   } cb[DIR_SIZE];
   int fd;//socket
+  struct epoll_event ev;
+  int pollflag;
   int status;//socket status
   struct task qtask;
 };
@@ -83,6 +86,7 @@ struct fdtab {
 
 extern int epoll_fd;
 extern struct list *task;
+extern struct list *fdlist;
 extern struct fdtab fdtabs[MAXEPOLLSIZE];
 
 

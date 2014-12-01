@@ -7,6 +7,8 @@ void init() {
   
   task = new struct list;
   list_init(task);
+  fdlist = new struct list;
+  list_init(fdlist);
 }
 
 void run_loop() {
@@ -52,16 +54,12 @@ int main(int argc, char *argv[]) {
   fdtabs[sfd].status = SC_CONN;
   fdtabs[sfd].cb[DIR_RD].f = stream_accept;
   fdtabs[sfd].cb[DIR_WR].f = NULL;
+  fdtabs[sfd].ev.events = EPOLLIN | EPOLLERR | EPOLLHUP;
+  fdtabs[sfd].ev.data.fd = sfd;
+  fdtabs[sfd].pollflag = EPOLL_CTL_ADD;
+  list_insert_head(fdlist,&fdtabs[sfd].qlist);
   
-  struct epoll_event ev;
-  ev.events = EPOLLIN | EPOLLERR | EPOLLHUP;
-  ev.data.fd = sfd;
- 
-  int iRet = epoll_ctl(epoll_fd,EPOLL_CTL_ADD,sfd,&ev);
-  if(iRet<0) {
-    printf("err:%d\n",errno);
-	return iRet;
-  }
+  
   while(1) {
     run_loop();
   }
