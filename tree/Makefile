@@ -26,22 +26,21 @@ SO_OPTIONS=-shared -o
 
 
 USR_INCLUDE= -I./ \
-              -I/usr/local/include/gtest/ \
 
  
 USR_FLAGS=  -D_DEBUG
 
-ALL_LIBS= -lgtest -lpthread
+ALL_LIBS= -lpthread
 
 #此处理开发人员不需要修改
-#.SUFFIXES: .cpp .c
-#.cpp.o:
-#	$(CXX)  $(CXX_OPTIONS) $(MODE_FLAG) -o $@ -c $< $(ALL_FLAGS) $(ALL_INCLUDES) $(USR_FLAGS) $(USR_INCLUDE)
-#.c.o:
-#	$(CCC)  $(CCC_OPTIONS) $(MODE_FLAG) -o $@ -c $< $(ALL_FLAGS) $(ALL_INCLUDES) $(USR_FLAGS) $(USR_INCLUDE)
+.SUFFIXES: .cpp .c
+.cpp.o:
+	$(CXX)  $(CXX_OPTIONS)  -o $@ -c $< 
+.c.o:
+	$(CCC)  $(CCC_OPTIONS)  -o $@ -c $< 
 
 
-SRCS = iterator.o 
+SRCS =  Tree.o main.o
 
 
 #下面生成两种库只是为了给出一个例子，实际 zxfunc 只需要生成静态库
@@ -49,7 +48,7 @@ STATIC_LIBRARY =
 
 SHARE_LIBRARY =  
 
-OUTPUT =  iter
+OUTPUT =  tree
 
 
 #all 定义段
